@@ -1,0 +1,223 @@
+---
+title: "bike_sharing_project"
+output: html_document
+date: "2022-11-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+if(!require("ggplot2")) install.packages("ggplot2")
+library("ggplot2")
+if(!require("tidyverse"))install.packages("tidyverse",dependencies = TRUE)
+library("tidyverse")
+if(!require("forecast")) install.packages("forecast", dependencies = TRUE)
+library("forecast")
+```
+
+```{r}
+ t_min<--8;t_max<-39 # t_min, t_max pour la première normalisation
+dataset_hour <-read.csv("./datasets/hour.csv",stringsAsFactors = TRUE)
+dataset_hour$season <-as.factor(dataset_hour$season)
+dataset_hour$temp_wo_n <- (t_max-t_min)*dataset_hour$temp+t_min #température non normalisé
+```
+
+
+```{r}
+graph_mean <- ggplot(dataset_hour,aes(x=season,y=temp_wo_n))+
+  geom_bar(stat = "summary") +
+  labs(
+  title    = "Bar plot (mean of temperature) for different Seasons"
+ )+
+  xlab("Season") + ylab("Temperature")
+graph_mean
+```
+```{r}
+graph_box <- ggplot(dataset_hour,aes(x=season,y=temp_wo_n,color=season))+ geom_boxplot(fill='gray') + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+theme_classic()+
+theme(
+  axis.title = element_text(size=15)
+)+
+labs(
+  title    = "Box plot (boites à moustaches) with different Seasons"
+)+
+xlab("Season") + ylab("Temperature")
+
+graph_box
+```
+1. Examine your data
+    On peut voir que boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(été)) < boite_a_moustache(temp(automne))
+                boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(hiver)) < boite_a_moustache(temp(été)):                                                                                
+    En regardant le diagramme à barre qui représente les moyennes des températures des saisons, on voit que moy(normalisé)_printemps < moy(normalisé)_été < moy_autonme(normalisé)
+                                                                                                             moy(normalisé)_printemps < moy(normalisé)_hiver < moy(normalisé)_été
+    De plus en traçant les boites à moustache, les distributions suivent cette ordre.
+    Les boites à moustaches sont des indicateurs statistiques très fiables (plus que la moyenne).
+    
+    
+```{r}
+mean <- mean(dataset_hour$temp_wo_n)
+med <- median(dataset_hour$temp_wo_n)
+sprintf("Moyenne: %f et Médiane: %f",mean,med)
+```
+Remarque: Moyenne ~ Médiane donc distribution de la température quasi symétrique.
+
+```{r}
+t_min<--8;t_max<-39 # t_min, t_max pour la première normalisation
+dataset_day <-read.csv("./datasets/day.csv",stringsAsFactors = TRUE)
+dataset_day$season <-as.factor(dataset_day$season)
+dataset_day$temp_wo_n <- (t_max-t_min)*dataset_day$temp+t_min #température non normalisé
+dataset_day
+```
+
+
+
+```{r}
+graph_scatter <- ggplot(dataset_day,aes(x=temp_wo_n,y=cnt))+ geom_point() + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+theme_classic()+
+theme(
+  axis.title = element_text(size=15)
+)+
+labs(
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals)"
+)+
+xlab("Temperature") + ylab("Numbers of bikes retals")
+
+graph_scatter
+```
+
+On peut voir qu'il y a une corrélation de type polynomiale du second degré (tendance polynomiale du second dégré)
+Interprétation: Quand il fait plus de 30°,le nombre de vélos loués diminuent.
+Pour des températures inférieure à 2°, il y a peu de vélos loués.
+On observe la distribution symétrique, autour de la moyenne (ou de le médiane) le nombre de vélos loués atteint son maximum.
+Tandis qu'à gauche ou à droite de la moyenne, on peut voir une décroissance linéaire (droite) du nombre de vélos loués.
+
+```{r}
+graph_scatter_n1 <- ggplot(dataset_day,aes(x=atemp,y=cnt))+ geom_point() + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+theme_classic()+
+theme(
+  axis.title = element_text(size=15)
+)+
+labs(
+  title    = "Scatter Plot (x=Normalized Temperature,y=Numbers of bikes retals)"
+)+
+xlab("Normalized Temperature") + ylab("Numbers of bikes retals")
+
+graph_scatter_n1
+```
+Il n'est pas nécessaire de regarder les deux températures normalisés, car la tendance sera la meme pour
+la température non normalisé et les deux températures normalisés.
+
+```{r}
+df_months <- as.tibble(dataset_hour)
+df_months %>% 
+  group_by(mnth) %>%# agregation by month
+  summarise(mean_temp_wo_n=mean(temp_wo_n), #compute mean temp,hum, windspeed and sum of rentals
+            mean_hum=mean(hum),
+            mean_windspeed=mean(windspeed),
+            sum_rentals=sum(cnt))
+```
+
+```{r}
+graph_scatter_casu <- ggplot(dataset_day,aes(x=temp_wo_n,y=casual))+ geom_point() + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+theme_classic()+
+theme(
+  axis.title = element_text(size=15)
+)+
+labs(
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals for casual users)"
+)+
+xlab("Temperature") + ylab("Numbers of bikes retals for casual users")
+
+graph_scatter_casu
+```
+```{r}
+graph_scatter_regi <- ggplot(dataset_day,aes(x=temp_wo_n,y=registered))+ geom_point() + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+theme_classic()+
+theme(
+  axis.title = element_text(size=15)
+)+
+labs(
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals for register users)"
+)+
+xlab("Temperature") + ylab("Numbers of bikes retals for register users")
+
+graph_scatter_regi
+```
+On observe deux choses:
+-Les personnes qui sont habitués à prendre un vélo ont leur habitude de consommation:
+Et donc une tendance globale de location de vélos se dégage et est observé dans le nuage de points(x=Température, y=Nombres de vélos loués pour les utilisateurs réguliers)
+-De plus, on observe la meme tendance pour le nuage de points représentant le nombre total 
+de vélo loués en fonction de la température. Sauf que les utilisateurs de vélos occasionnels engendre
+du "bruit" qui ne permet pas de pouvoir distinguer la tendance (corrélation) aussi clairement que pour
+le nuage de points (x=Température, y=Nombres de vélos loués pour les utilisateurs réguliers).
+Donc on peut considérer, que les utilisateurs occasionnels louent un nombre aléatoires de vélo qui
+ne dépend pas forcément de la température ou d'une habitude définie des utilisateurs.
+
+```{r}
+time_series_cnt <- ts(dataset_day$cnt,frequency=365,start=c(2011,1))
+plot(time_series_cnt)
+```
+```{r}
+graph_line <- ggplot(dataset_day,aes(x=as.Date(dteday),y=cnt))+geom_line()+
+  xlab("Date")+ylab("Numbers of retals per day")
+graph_line
+```
+On voit très clairement une tendance et une saisonalité:
+-On voit qu'en période d'été, le nombres de vélos est à son maximum en été puis une baisse en période de printemps et d'hiver puis un remontée en automne. puis chaque année le phénomène se reproduit (saisonalité).
+On voit quand meme des irrégularités, beaucoup de fluctuations sur une période donnée (exemple: fin 2012) --> une quantité importante de bruit qui cause ces fluctuations.
+
+```{r}
+# function qui compte le numbre de valeur manquante
+count_na_func = function(x) sum(is.na(x))
+
+# le nombre de valeur manquante au niveau des colonnes
+sum_na.cols = dataset_day %>%
+summarise_all(~sum(is.na(.)))
+
+dataset_day_wo_na <-dataset_day %>%mutate(count_na = apply(., 1, count_na_func))
+sum_na.cols
+# le nombre de NA en ligne: ici on crée un new champ qui va contenir  le nombre de valeur maquante en ligne
+
+```
+
+On remarque qu'il n'y a pas de valeurs manquantes ni dans les colonnes, ni dans les lignes
+
+
+```{r}
+  #return boolean df of non-outliers values
+non_outliers <- function(df_colname){
+  quantiles <-quantile(df_colname, probs = seq(0, 1, 1/4))
+  condition_outliers <- !(quantiles[1]-1.5*(quantiles[3]-quantiles[1]) > df_colname | df_colname >    quantiles[3]+1.5*(quantiles[3]-quantiles[1]))
+  return(condition_outliers)
+}
+df_cnt_wo_outliers <- dataset_day[non_outliers(dataset_day$cnt),c("cnt")]
+df_cnt_wo_outliers
+```
+
+On remarque qu'il n'y a pas de outliers pour la colonne "cnt"
+
+```{r}
+decomposition <-decompose(time_series_cnt)
+plot(decomposition)
+```
+Decomposition of cnt time series
+
+```{r}
+ht_cnt <- HoltWinters(diff(time_series_cnt,differences = 1))
+plot(forecast(ht_cnt,h=100))
+```
+```{r}
+ht_cnt <- HoltWinters(time_series_cnt)
+plot(forecast(ht_cnt,h=100))
+plot(ht_cnt)
+```
+On observe que le modèle prévoit bien (avec un intervalle de confiance assez petit) la timeseries originale et arrivent à capter les tendances haussières/baissières de la série en prenant en compte la saisonalité.
+
+
+
+
+
+
