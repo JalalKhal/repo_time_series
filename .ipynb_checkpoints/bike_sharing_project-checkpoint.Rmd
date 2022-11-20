@@ -166,7 +166,7 @@ graph_line <- ggplot(dataset_day,aes(x=as.Date(dteday),y=cnt))+geom_line()+
 graph_line
 ```
 On voit très clairement une tendance haussière sur le long-terme et une saisonalité:
--On voit qu'en période d'hiver, le nombres de vélos est à son minimum puis une augmentation en période de printemps et d'été (maximum atteint en été) puis un baisse en automne. puis chaque année le phénomène se reproduit (saisonalité).
+-On voit qu'en période d'été, le nombres de vélos est à son maximum en été puis une baisse en période de printemps et d'hiver puis un remontée en automne. puis chaque année le phénomène se reproduit (saisonalité).
 On voit quand meme des irrégularités, beaucoup de fluctuations sur une période donnée (exemple: fin 2012) --> une quantité importante de bruit qui cause ces fluctuations.
 
 ```{r}
@@ -206,8 +206,13 @@ plot(decomposition)
 Decomposition of cnt time series
 
 ```{r}
+ht_cnt <- HoltWinters(diff(time_series_cnt,differences = 1))
+plot(forecast(ht_cnt,h=100))
+```
+
+```{r}
 ht_cnt <- HoltWinters(time_series_cnt)
-#ht_cnt
+ht_cnt
 ```
 
 
@@ -217,189 +222,46 @@ plot(ht_cnt)
 plot(ht_cnt$fitted)
 ```
 2.
-On observe que le modèle Holt-Winter's method ht_cnt proposée prévoit bien (avec un intervalle de confiance assez petit) la timeseries originale et arrivent à capter les effets de la saisonalité.
-Dans le modèle proposée ht_cnt on voit que beta=0 est le meilleur paramètre ce qui signifie qu'on ne réagit pas vite au changement. Car HoltWinter ignore complètement la tendance haussière générale sur deux ans.
-Car il calcule les valeurs prédites sur une seule période (2012-2013) et la tendance haussière est présente sur les deux périodes (2011-2012 et 2012-2013 ) c'est à dire qu'en se restreignant à une seule période,
-on obtient une série (la série originale) sans tendance.
-Pour la valeur de alpha, on choisit une valeur de alpha petite (alpha ~0.18) ce qui signifie que les anciennes observations sont plus pris en compte que les récentes.
-En effet la série originale a beaucoup de fluctuations ce qui engendre du bruit important, si on met une valeur de alpha trop grande, on réagit vite aux changements
-et donc fluctuations ce qui occasionne un résultat moins fiable et plus de fluctuations q'une valeur de alpha petite.
-Pour gamma (gamma ~0.5599661), il prend bien en compte la période précédente (2011-2012).
+On observe que le modèle Holt-Winter's method ht_cnt proposée prévoit bien (avec un intervalle de confiance assez petit) la timeseries originale et arrivent à capter les effets de la saisonalité ainsi que la tendance haussière sur le long terme.
+Dans le modèle proposée ht_cnt on voit que beta=0 ce qui signifie qu'on ne réagit pas vite au changement.
+On prend donc pour le calcul de la pente, un calcul sur le long-terme sans changement rapide de la pente (b_t=b_t-1).
+Ce qui est cohérent car dans la décomposition de la timeseries originale, la tendance est une tendance sur le long-terme
+sans changement de tendance brusque (baisse...).
+Pour la valeur de alpha, on voit qu'elle est assez petite ce qui indique qu'on fait plus confiance aux anciennes 
+observations qu'aux récentes.
+Ce qui est cohérent car il n'y pas de changement brusque de valeurs (hausse puis baisse...) dans time_series_cnt comme la tendance
+est une tendance haussière sans baisse sur le long-terme. Il faudra juste prendre en compte l'effet de la saisonalité pour réagir
+en fonction du changement de cycle de saisonalité.
+Pour la saisonalité on fait un compromis entre les cycles de saisonalité récents et anciens (gamma ~0.56).
+Ce modèle proposée est donc très bien car les différents valeurs de alpha, beta, gamma sont cohérentes pour cette timeseries time_series_cnt.
 
-Pour la time series du modèle, Il n'y a pas de saisonalité car par assez de période (time series originale sur 2 période 2011-2012 et 2012-2013).
-La time series du modèle représente les valeurs une seule période (2012-2013).
-En ce qui concerne la stationarité, on obtient une série pas trop stationnaire (pas une variance constante).
+Pour la time series du modèle, la saisonalité est très proche de la timeseries originale, ce qui est bien.
+Au niveau de la stationarité, cette time series n'est pas stationnaire car la variance n'est pas constante.
+(Il y a une tendance) mais sur un cycle de saisonalité, on peut avoir quelque chose d'un peu près stationnaire.
 
 3.
-La série du modèle n'étant pas stationnaire, on la différencie pour obtenir une série temporelle stationnaire pour pouvoir
-appliquer le modèle ARIMA.
-```{r}
-ht_cnt_fit <-ht_cnt$fitted[,'xhat']
-diff_ht_cnt_fit<-diff(ht_cnt_fit,differences = 1)
-plot(diff_ht_cnt_fit)
-```
-On peut voir qu'à l'ordre 1 (d=1), on obtient une série temporelle stationnaire.
 
-```{r}
-acf(diff_ht_cnt_fit)
-pacf(diff_ht_cnt_fit)
-```
-3.
-Modèles possibles:
-ACF tend vers 0 et PACF tend vers 0 donc 3 modèles possibles:
--MA(2) d'après l'ACF (après une différenciation de la série originale). (a)
--AR(5) d'après le PACF (après une différenciation de la série originale). (b)
--ARIMA(p=5,d=1,q=2).
-On considère ARIMA(5,1,2) car (a) puis (b).
-```{r}
-arima_512<-arima(ht_cnt$fitted[,'xhat'],order = c(5, 1, 2))
-fitted_arima_512 <-ht_cnt$fitted[,'xhat']-arima_512$residuals
-plot(fitted_arima_512,col="red")
-lines(ht_cnt$fitted[,'xhat'])
-arima_512
-```
-en rouge: modèle ARIMA(5,1,2) pour la série temporelle smoothed.
-en noir: smoothed time series.
-
-```{r}
-Box.test(arima_512$residuals,lag=20,type="Ljung")
-```
-On voit que la p-value ~0.9992 pour Box-Ljung test est très proche de 1 donc les 20 premiers résidus sont indépendants.
-```{r}
-plot(arima_512$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_512$residuals),digits=2),round(var(arima_512$residuals),digits=2))
-```
 
 
 
 ```{r}
-arima_510<-arima(ht_cnt$fitted[,'xhat'],order = c(5, 1,0))
-fitted_arima_510 <-ht_cnt$fitted[,'xhat']-arima_510$residuals
-plot(fitted_arima_510,col="red")
-lines(ht_cnt$fitted[,'xhat'])
-arima_510
-```
-```{r}
-Box.test(arima_510$residuals,lag=20,type="Ljung")
+plot(diff(ht_cnt$fitted,differences = 1))
+
 ```
 
 
-```{r}
-plot(arima_510$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_510$residuals),digits=2),round(var(arima_510$residuals),digits=2))
-```
 
 
-4.I
+
 
 ```{r}
 deseason_cnt=seasadj(decomposition)
-diff_deseason_cnt=diff(deseason_cnt,differences=1)
-plot(diff_deseason_cnt)
-```
+plot(deseason_cnt)
 
-Avec d=1 --> série temporelle stationnaire (moyenne autour de 0).
-
-```{r}
-acf(diff_deseason_cnt)
-pacf(diff_deseason_cnt)
-```
-ACF et PACF tend vers 0 de manière exponentielle:
--MA(2) d'après l'ACF (après une différenciation de la série originale). (a)
--AR(5) d'après le PACF (après une différenciation de la série originale). (b)
--ARIMA(p=5,d=1,q=2).
-On considère dans un premiers temps ARIMA(5,1,2) car (a) puis (b).
-
-```{r}
-arima_cnt_512<-arima(deseason_cnt,order = c(5, 1,2))
-fitted_arima_cnt_512 <-deseason_cnt-arima_cnt_512$residuals
-plot(fitted_arima_cnt_512,col="red")
-lines(deseason_cnt)
-arima_cnt_512
-```
-
-```{r}
-Box.test(arima_cnt_512$residuals,lag=20,type="Ljung")
-```
-
-À un seuil de risque de 5%, p-value ~0.018 donc on rejete l'hypothèse d'indépendance des 20 premiers résidus.
---> mauvais modèle: la probabilité qu'un résidu (les 20 premiers) dépend du temps car les résidus (les 20 premiers) ne sont pas indépendants.
-
-```{r}
-plot(arima_cnt_512$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_512$residuals),digits=2),round(var(arima_cnt_512$residuals),digits=2))
-```
-
-```{r}
-arima_cnt_012<-arima(deseason_cnt,order = c(0, 1,2))
-fitted_arima_cnt_012 <-deseason_cnt-arima_cnt_012$residuals
-plot(fitted_arima_cnt_012,col="red")
-lines(deseason_cnt)
-arima_cnt_012
-```
-
-```{r}
-Box.test(arima_cnt_012$residuals,lag=20,type="Ljung")
-```
-
-Les 20 premiers résidus ne sont pas indépendant que pour ARIMA(512): p-value~1.568e-08 très petite p-value!!!
-
-```{r}
-plot(arima_cnt_012$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_012$residuals),digits=2),round(var(arima_cnt_012$residuals),digits=2))
 ```
 
 
-```{r}
-arima_cnt_510<-arima(deseason_cnt,order = c(5, 1,0))
-fitted_arima_cnt_510 <-deseason_cnt-arima_cnt_510$residuals
-plot(fitted_arima_cnt_510,col="red")
-lines(deseason_cnt)
-arima_cnt_510
-```
 
-```{r}
-Box.test(arima_cnt_510$residuals,lag=20,type="Ljung")
-```
--->Dépendance des 20 premiers résidus.
 
-```{r}
-plot(arima_cnt_510$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_510$residuals),digits=2),round(var(arima_cnt_510$residuals),digits=2))
-```
-On remarque tout d'abord que dans les 3 modèles, les résidus ne sont pas indépendants, ce qui s'explique:
-La time series se sépare entre trois parties:
-avant milieu 2011 et après milieu 2012 --> time series stationnaire sans tendance.
-Entre les deux période: une tendance linéaire (droite).
-Les modèle ARIMA prédisent très bien la droite (deterministe) ce qui conduit à des résidus très proche de 0.
-Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
-Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
-On remarque que la log-vraisemblance dans les trois modèles est autour de -6000 sans différence significative.
-Ainsi que l'AIC pour les trois modèles à environ 12000.
-Les trois modèles engendrent des résidus non-indépendants.
-Nous choisissons donc le modèle le moins complexe pour prévenir l'overfitting ARIMA(0,1,2).
 
-4.II
 
-```{r}
-auto_arima_cnt<-auto.arima(deseason_cnt,d=1)
-fitted_auto_arima_cnt <-deseason_cnt-auto_arima_cnt$residuals
-plot(fitted_auto_arima_cnt,col="red")
-lines(deseason_cnt)
-auto_arima_cnt
-```
-```{r}
-Box.test(auto_arima_cnt$residuals,lag=20,type="Ljung")
-```
-```{r}
-plot(auto_arima_cnt$residuals)
-sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(auto_arima_cnt$residuals),digits=2),round(var(auto_arima_cnt$residuals),digits=2))
-```
-
-On remarque tout d'abord, les résidus ne sont pas indépendants, ce qui s'explique:
-La time series se sépare entre trois parties:
-avant milieu 2011 et après milieu 2012 --> time series stationnaire sans tendance.
-Entre les deux période: une tendance linéaire (droite).
-Le modèle auto.ARIMA prédit très bien la droite (deterministe) ce qui conduit à des résidus très proche de 0.
-Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
-Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
