@@ -264,12 +264,20 @@ en noir: smoothed time series.
 ```{r}
 Box.test(arima_512$residuals,lag=20,type="Ljung")
 ```
-On voit que la p-value ~0.9992 pour Box-Ljung test est très proche de 1 donc les 20 premiers résidus sont indépendants.
+On voit que la p-value ~0.9992 pour Box-Ljung test est très proche de 1 (>0.05) donc les 20 premiers résidus sont indépendants.(auto corrélation =0 pour les 20 premiers résidus -->acceptation de l'hypothèse nulle du test).
+-->résidus valident pour le modèle (bruit blanc).
+```{r}
+acf(arima_512$residuals,lag.max=20)
+pacf(arima_512$residuals,lag.max=20)
+
+```
+Pas d'auto-corrélation ni d'auto corrélation partielle pour les résidus (20 premiers) --> résidu est bien un bruit blanc.
+
 ```{r}
 plot(arima_512$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_512$residuals),digits=2),round(var(arima_512$residuals),digits=2))
 ```
-
+résidus un peu près centrés + variance un peu près constante (d'après le graphique) --> résidus bruits blancs.
 
 
 ```{r}
@@ -282,12 +290,50 @@ arima_510
 ```{r}
 Box.test(arima_510$residuals,lag=20,type="Ljung")
 ```
+On voit que la p-value ~0.7196 pour Box-Ljung test est  proche de 1 (>0.05) donc les 20 premiers résidus sont indépendants. (auto corrélation =0 pour les 20 premiers résidus -->acceptation de l'hypothèse nulle du test).
+-->résidus valident pour le modèle (bruit blanc).
 
+
+```{r}
+acf(arima_510$residuals,lag.max=20)
+pacf(arima_510$residuals,lag.max=20)
+```
+Pas d'auto-corrélation ni d'auto corrélation partielle pour les résidus (20 premiers) --> résidu est bien un bruit blanc.
 
 ```{r}
 plot(arima_510$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_510$residuals),digits=2),round(var(arima_510$residuals),digits=2))
 ```
+résidus un peu près centrés + variance un peu près constante (d'après le graphique) --> résidus bruits blancs.
+
+```{r}
+arima_012<-arima(ht_cnt$fitted[,'xhat'],order = c(0, 1,2))
+fitted_arima_012<-ht_cnt$fitted[,'xhat']-arima_012$residuals
+plot(fitted_arima_012,col="red")
+lines(ht_cnt$fitted[,'xhat'])
+arima_012
+```
+```{r}
+Box.test(arima_012$residuals,lag=20,type="Ljung")
+```
+On voit que la p-value ~0.7803 pour Box-Ljung test est proche de 1 (>0.05) donc les 20 premiers résidus sont indépendants. (auto corrélation =0 pour les 20 premiers résidus -->acceptation de l'hypothèse nulle du test).
+-->résidus valident pour le modèle (bruit blanc).
+
+```{r}
+acf(arima_012$residuals,lag.max=20)
+pacf(arima_012$residuals,lag.max=20)
+```
+
+Pas d'auto-corrélation ni d'auto corrélation partielle pour les résidus (20 premiers) --> résidu est bien un bruit blanc.
+
+Conclusion:
+Les trois modèles sont validents (résidus bruit blanc entre autres), nous prenons le modèle avec le plus petit AIC:
+AIC=6087.39 pour ARIMA(0,1,2) / AIC=6088.82 pour ARIMA(5,1,2) / AIC=6097.87 pour ARIMA(5,1,0).
+ARIMA(0,1,2) est le meilleure modèle car c'est le plus simple (moins de paramètres -->prévenir l'overfitting) et le plus
+petit AIC.
+
+
+
 
 
 4.I
