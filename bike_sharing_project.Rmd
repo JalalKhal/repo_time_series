@@ -335,8 +335,7 @@ résidus un peu près centrés + variance un peu près constante (d'après le gr
 Conclusion:
 Les trois modèles sont validents (résidus bruit blanc entre autres), nous prenons le modèle avec le plus petit AIC:
 AIC=6087.39 pour ARIMA(0,1,2) / AIC=6090.34 pour ARIMA(5,1,1) / AIC=6097.87 pour ARIMA(5,1,0).
-ARIMA(0,1,2) est le meilleure modèle car c'est le plus simple (moins de paramètres -->prévenir l'overfitting) et le plus
-petit AIC.
+ARIMA(0,1,2) est le meilleure modèle car c'est le plus simple (moins de paramètres -->prévenir l'overfitting) et le plus petit AIC.
 
 4.I
 
@@ -370,22 +369,20 @@ arima_cnt_511
 Box.test(arima_cnt_511$residuals,lag=20,type="Ljung")
 ```
 
-À un seuil de risque de 5%, p-value ~0.0003949 donc on rejete l'hypothèse d'indépendance des 20 premiers résidus.
+À un seuil de risque de 5%, p-value ~0.0003949 (<0.05) donc on rejete l'hypothèse d'indépendance des 20 premiers résidus.
 --> mauvais modèle: la probabilité qu'un résidu (les 20 premiers) dépend du temps car les résidus (les 20 premiers) ne sont pas indépendants.
 
 ```{r}
 acf(arima_cnt_511$residuals)
 pacf(arima_cnt_511$residuals)
 ```
-On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour
-certains résidus (ça se confirme avec le Test Q de Ljung-Box).
+On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box).
 
 ```{r}
 plot(arima_cnt_511$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_511$residuals),digits=2),round(var(arima_cnt_511$residuals),digits=2))
 ```
-Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit
-ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes)
+Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
 
 
 
@@ -415,8 +412,7 @@ certains résidus (ça se confirme avec le Test Q de Ljung-Box).
 plot(arima_cnt_012$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_012$residuals),digits=2),round(var(arima_cnt_012$residuals),digits=2))
 ```
-Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit
-ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
+Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
 
 ```{r}
 arima_cnt_510<-arima(deseason_cnt,order = c(5, 1,0))
@@ -435,16 +431,14 @@ Box.test(arima_cnt_510$residuals,lag=20,type="Ljung")
 acf(arima_cnt_510$residuals)
 pacf(arima_cnt_510$residuals)
 ```
-On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour
-certains résidus (ça se confirme avec le Test Q de Ljung-Box) mais comme p-value plus grande que les deux autres modèles, c'est moins
+On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box) mais comme p-value plus grande que les deux autres modèles, c'est moins
 flagrant en regardant juste l'ACF.
 
 ```{r}
 plot(arima_cnt_510$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_510$residuals),digits=2),round(var(arima_cnt_510$residuals),digits=2))
 ```
-Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit
-ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
+Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
 
 Conclusion:
 On remarque tout d'abord que dans les 3 modèles, les résidus ne sont pas indépendants, ce qui s'explique:
@@ -455,7 +449,7 @@ Les modèle ARIMA prédisent très bien la droite (deterministe) ce qui conduit 
 Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
 Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
 Les résidus ne sont donc pas des bruit blancs car pas indépendants dans les 3 modèles.
-Donc ces modèles ARIMA ne sont pas bons pour cette série mais si on devrait en choisir on choisit ARIMA(0,1,2):
+Donc ces modèles ARIMA ne sont pas bons pour cette série mais si on devrait en choisir un on choisit ARIMA(0,1,2):
 ARIMA 511:
 Log(vraisemblance)=-5989.55
 AIC= 11993.1 
@@ -470,8 +464,7 @@ AIC=12004.06
 
 En effet la différence maximale d'AIC entre ARIMA(0,1,2) et les deux autres modèles est de l'ordre de 0.091%:
 (12004.06-11993.1)/11993.1 ~ 0.00091.
-Nous choisissons donc le modèle le moins complexe pour prévenir le risque l'overfitting ARIMA(0,1,2) car la différence d'AIC est vraiment minime
-entre les modèles.
+Nous choisissons donc le modèle le moins complexe pour prévenir le risque l'overfitting ARIMA(0,1,2) car la différence d'AIC est vraiment minime entre les modèles.
 
 4.II
 
@@ -498,8 +491,124 @@ Le modèle auto.ARIMA prédit très bien la droite (deterministe) ce qui conduit
 Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
 Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
 
+
 4.III
+La démarche d'évaluation et d'itération a été faite précédemment.
 ```{r}
-forecast_cnt_best_model <-forecast(auto_arima_cnt,h=15)
+forecast_cnt_best_model <-forecast(auto_arima_cnt,h=25)
 plot(forecast_cnt_best_model)
 ```
+4.IV
+```{r}
+deseason_cnt
+```
+
+```{r}
+tmp <- ts(deseason_cnt,frequency=1,start=c(1,1))
+tmp
+```
+```{r}
+training_set <- window(deseason_cnt,2011,end=2012.915)
+test_set <-window(deseason_cnt,start=2012.915)
+training_set
+```
+
+```{r}
+test_set
+```
+
+
+
+```{r}
+diff_training_set <- diff(training_set,differences=1) #on obtient une time series stationnaire
+plot(diff_training_set)
+```
+```{r}
+acf(diff_training_set)
+pacf(diff_training_set)
+```
+ACF et PACF tend vers 0 de manière exponentielle:
+ARIMA(5,1,0) d'après le PACF
+ARIMA(0,1,1) d'après l'ACF
+ARIMA(5,1,1)
+
+```{r}
+arima_training_set_510 <- arima(diff_training_set,order=c(5,1,0))
+arima_training_set_510
+```
+
+```{r}
+Box.test(arima_training_set_510$residuals,lag=20,type="Ljung")
+```
+Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (2.2e-16<0.05)
+```{r}
+acf(arima_training_set_510$residuals)
+pacf(arima_training_set_510$residuals)
+```
+Logique
+
+```{r}
+plot(arima_training_set_510$residuals)
+sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_training_set_510$residuals),digits=2),round(var(arima_training_set_510$residuals),digits=2))
+```
+résidus un peu près centrés + variance un peu près constante (d'après le graphique).
+
+On obtient des meilleures résultats pour ARIMA(0,1,2) que pour ARIMA(0,1,1): On utilise ARIMA(0,1,2).
+```{r}
+arima_training_set_012 <- arima(diff_training_set,order=c(0,1,2))
+arima_training_set_012
+```
+
+```{r}
+Box.test(arima_training_set_012$residuals,lag=20,type="Ljung")
+```
+Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (2.2e-16<0.05).
+```{r}
+acf(arima_training_set_012$residuals)
+pacf(arima_training_set_012$residuals)
+```
+Logique
+
+```{r}
+plot(arima_training_set_012$residuals)
+sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_training_set_012$residuals),digits=2),round(var(arima_training_set_012$residuals),digits=2))
+```
+résidus un peu près centrés + variance un peu près constante (d'après le graphique).
+
+```{r}
+arima_training_set_511 <- arima(diff_training_set,order=c(5,1,1))
+arima_training_set_511
+```
+
+```{r}
+Box.test(arima_training_set_511$residuals,lag=20,type="Ljung")
+```
+Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (0.000597<0.05)
+```{r}
+acf(arima_training_set_511$residuals)
+pacf(arima_training_set_511$residuals)
+```
+On observe qu'il y a moins d'auto corrélations ou d'auto corrélation partielle que les deux autres modèles
+--> logique car la p-value du test ci-dessus est plus grande que pour les deux autres modèles précédents.
+
+```{r}
+plot(arima_training_set_511$residuals)
+sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_training_set_511$residuals),digits=2),round(var(arima_training_set_511$residuals),digits=2))
+```
+résidus un peu près centrés + variance un peu près constante (d'après le graphique).
+AIC=11469.69 -->ARIMA(5,1,1) 
+AIC=11493.01 -->ARIMA(0,1,2) 
+AIC=11724.96 -->ARIMA(5,1,0)
+(*) Modèle le plus petit AIC mais 6 paramètre on chosit ARIMA(0,1,2)-->modèle moins complexe avec une différence d'AIC négligeable
+
+```{r}
+auto_arima_cnt<-auto.arima(training_set,d=1)
+auto_arima_cnt #le meilleure modèle
+```
+```{r}
+plot(forecast(training_set,h=25))
+lines(test_set,col="red")
+```
+
+On observe que les données réelles (test set) sont en majorité dans l'intervalle de confiance du modèle ce qui est bien.
+Mais le modèle a du mal à cerner l'évolution de la time series (augmentation/diminution), il se contente à prédire une donnée stable.
