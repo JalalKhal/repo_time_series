@@ -1,7 +1,10 @@
 ---
-title: "bike_sharing_project"
-output: html_document
-date: "2022-11-19"
+title: 'TP: Locations de vélos avec les séries temporelles'
+author: "Khaldi Jalal Amegah Godwin"
+date: '2022-11-19'
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +25,7 @@ library("forecast")
  t_min<--8;t_max<-39 # t_min, t_max pour la première normalisation
 dataset_hour <-read.csv("./datasets/hour.csv",stringsAsFactors = TRUE)
 dataset_hour$season <-as.factor(dataset_hour$season)
-dataset_hour$temp_wo_n <- (t_max-t_min)*dataset_hour$temp+t_min #température non normalisé
+dataset_hour$temp_wo_n <- (t_max-t_min)*dataset_hour$temp+t_min #température non normalisée
 ```
 
 
@@ -36,7 +39,7 @@ graph_mean <- ggplot(dataset_hour,aes(x=season,y=temp_wo_n))+
 graph_mean
 ```
 ```{r}
-graph_box <- ggplot(dataset_hour,aes(x=season,y=temp_wo_n,color=season))+ geom_boxplot(fill='gray') + labs(title='Title',size=222)+ theme(plot.title = element_text(size=225)) +
+graph_box <- ggplot(dataset_hour,aes(x=season,y=temp_wo_n,color=season))+ geom_boxplot(fill='gray') + labs(title='Title',size=222) +theme(plot.title = element_text(size=225)) +
 theme_classic()+
 theme(
   axis.title = element_text(size=15)
@@ -48,13 +51,14 @@ xlab("Season") + ylab("Temperature")
 
 graph_box
 ```
+
 1. Examine your data
-    On peut voir que boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(été)) < boite_a_moustache(temp(automne))
-                boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(hiver)) < boite_a_moustache(temp(été)):                                                                                
-    En regardant le diagramme à barre qui représente les moyennes des températures des saisons, on voit que moy(normalisé)_printemps < moy(normalisé)_été < moy_autonme(normalisé)
-                                                                                                             moy(normalisé)_printemps < moy(normalisé)_hiver < moy(normalisé)_été
-    De plus en traçant les boites à moustache, les distributions suivent cette ordre.
-    Les boites à moustaches sont des indicateurs statistiques très fiables (plus que la moyenne).
+On peut voir que boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(été)) < boite_a_moustache(temp(automne))
+et boite_a_moustache(temp(printemps)) < boite_a_moustache(temp(hiver)) < boite_a_moustache(temp(été)):                                                                                
+En regardant le diagramme à barre qui représente les moyennes des températures des saisons, 
+on voit que moy(normalisée)_printemps < moy(normalisée)_été < moy_autonme(normalisée) et                                             moy(normalisée)_printemps < moy(normalisée)_hiver < moy(normalisée)_été
+De plus en traçant les boites à moustache, les distributions suivent cette ordre.
+Les boites à moustaches sont des indicateurs statistiques très fiables (plus que la moyenne).
     
     
 ```{r}
@@ -62,14 +66,14 @@ mean <- mean(dataset_hour$temp_wo_n)
 med <- median(dataset_hour$temp_wo_n)
 sprintf("Moyenne: %f et Médiane: %f",mean,med)
 ```
-Remarque: Moyenne ~ Médiane donc distribution de la température quasi symétrique.
+Remarque: Moyenne ~ Médiane donc distribution empirique de la température quasi symétrique.
 
 ```{r}
 t_min<--8;t_max<-39 # t_min, t_max pour la première normalisation
 dataset_day <-read.csv("./datasets/day.csv",stringsAsFactors = TRUE)
 dataset_day$season <-as.factor(dataset_day$season)
-dataset_day$temp_wo_n <- (t_max-t_min)*dataset_day$temp+t_min #température non normalisé
-dataset_day
+dataset_day$temp_wo_n <- (t_max-t_min)*dataset_day$temp+t_min #température non normalisée
+head(dataset_day)
 ```
 
 
@@ -81,14 +85,15 @@ theme(
   axis.title = element_text(size=15)
 )+
 labs(
-  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals)"
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes rentals)"
 )+
-xlab("Temperature") + ylab("Numbers of bikes retals")
+xlab("Temperature") + ylab("Numbers of bikes rentals")
 
 graph_scatter
 ```
 
-On peut voir qu'il y a une corrélation de type polynomiale du second degré (tendance polynomiale du second dégré)
+On peut voir qu'il y a une corrélation de type polynomiale du second degré (tendance polynomiale du second degré).
+
 Interprétation: Quand il fait plus de 30°,le nombre de vélos loués diminuent.
 Pour des températures inférieure à 2°, il y a peu de vélos loués.
 On observe la distribution symétrique, autour de la moyenne (ou de le médiane) le nombre de vélos loués atteint son maximum.
@@ -101,14 +106,15 @@ theme(
   axis.title = element_text(size=15)
 )+
 labs(
-  title    = "Scatter Plot (x=Normalized Temperature,y=Numbers of bikes retals)"
+  title    = "Scatter Plot (x=Normalized Temperature,y=Numbers of bikes rentals)"
 )+
-xlab("Normalized Temperature") + ylab("Numbers of bikes retals")
+xlab("Normalized Temperature") + ylab("Numbers of bikes rentals")
 
 graph_scatter_n1
 ```
-Il n'est pas nécessaire de regarder les deux températures normalisés, car la tendance sera la meme pour
-la température non normalisé et les deux températures normalisés.
+
+Il n'est pas nécessaire de regarder les deux températures normalisées, car la tendance sera la meme pour
+la température non normalisée et les deux températures normalisées.
 
 ```{r}
 df_months <- as.tibble(dataset_hour)
@@ -127,9 +133,9 @@ theme(
   axis.title = element_text(size=15)
 )+
 labs(
-  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals for casual users)"
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes rentals for casual users)"
 )+
-xlab("Temperature") + ylab("Numbers of bikes retals for casual users")
+xlab("Temperature") + ylab("Numbers of bikes rentals for casual users")
 
 graph_scatter_casu
 ```
@@ -140,20 +146,21 @@ theme(
   axis.title = element_text(size=15)
 )+
 labs(
-  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes retals for register users)"
+  title    = "Scatter Plot (x=Temperature,y=Numbers of bikes rentals for register users)"
 )+
-xlab("Temperature") + ylab("Numbers of bikes retals for register users")
+xlab("Temperature") + ylab("Numbers of bikes rentals for register users")
 
 graph_scatter_regi
 ```
+
 On observe deux choses:
 -Les personnes qui sont habitués à prendre un vélo ont leur habitude de consommation:
 Et donc une tendance globale de location de vélos se dégage et est observé dans le nuage de points(x=Température, y=Nombres de vélos loués pour les utilisateurs réguliers)
--De plus, on observe la meme tendance pour le nuage de points représentant le nombre total 
-de vélo loués en fonction de la température. Sauf que les utilisateurs de vélos occasionnels engendre
+-De plus, on observe la même tendance pour le nuage de points représentant le nombre total
+de vélos loués en fonction de la température. Sauf que les utilisateurs de vélos occasionnels engendrent
 du "bruit" qui ne permet pas de pouvoir distinguer la tendance (corrélation) aussi clairement que pour
 le nuage de points (x=Température, y=Nombres de vélos loués pour les utilisateurs réguliers).
-Donc on peut considérer, que les utilisateurs occasionnels louent un nombre aléatoires de vélo qui
+Donc on peut considérer, que les utilisateurs occasionnels louent un nombre aléatoires de vélos qui
 ne dépend pas forcément de la température ou d'une habitude définie des utilisateurs.
 
 ```{r}
@@ -165,12 +172,14 @@ graph_line <- ggplot(dataset_day,aes(x=as.Date(dteday),y=cnt))+geom_line()+
   xlab("Date")+ylab("Numbers of retals per day")
 graph_line
 ```
+
 On voit très clairement une tendance haussière sur le long-terme et une saisonalité:
 -On voit qu'en période d'hiver, le nombres de vélos est à son minimum puis une augmentation en période de printemps et d'été (maximum atteint en été) puis un baisse en automne. puis chaque année le phénomène se reproduit (saisonalité).
-On voit quand meme des irrégularités, beaucoup de fluctuations sur une période donnée (exemple: fin 2012) --> une quantité importante de bruit qui cause ces fluctuations.
+On voit quand même des irrégularités, beaucoup de fluctuations sur une période donnée (exemple: fin 2012) --> une quantité importante de bruit qui cause ces fluctuations.
+
 
 ```{r}
-# function qui compte le numbre de valeur manquante
+# function qui compte le nombre de valeur manquante
 count_na_func = function(x) sum(is.na(x))
 
 # le nombre de valeur manquante au niveau des colonnes
@@ -179,7 +188,7 @@ summarise_all(~sum(is.na(.)))
 
 dataset_day_wo_na <-dataset_day %>%mutate(count_na = apply(., 1, count_na_func))
 sum_na.cols
-# le nombre de NA en ligne: ici on crée un new champ qui va contenir  le nombre de valeur maquante en ligne
+# le nombre de NA en ligne: ici on crée un nouveau champ qui va contenir  le nombre de valeur maquante en ligne
 
 ```
 
@@ -197,17 +206,18 @@ df_cnt_wo_outliers <- dataset_day[non_outliers(dataset_day$cnt),c("cnt")]
 df_cnt_wo_outliers
 ```
 
-On remarque qu'il n'y a pas de outliers pour la colonne "cnt"
+On remarque qu'il n'y a pas de outliers pour la colonne "cnt".
 
 ```{r}
 decomposition <-decompose(time_series_cnt)
 plot(decomposition)
 ```
+
 Decomposition of cnt time series
+
 
 ```{r}
 ht_cnt <- HoltWinters(time_series_cnt)
-#ht_cnt
 ```
 
 
@@ -216,41 +226,51 @@ plot(forecast(ht_cnt,h=100))
 plot(ht_cnt)
 plot(ht_cnt$fitted)
 ```
+
 2.
-On observe que le modèle Holt-Winter's method ht_cnt proposée prévoit bien (avec un intervalle de confiance assez petit) la timeseries originale et arrivent à capter les effets de la saisonalité.
-Dans le modèle proposée ht_cnt on voit que beta=0 est le meilleur paramètre ce qui signifie qu'on ne réagit pas vite au changement. Car HoltWinter ignore complètement la tendance haussière générale sur deux ans.
+On observe que le modèle Holt-Winter's method ht_cnt proposé prévoit bien (avec un intervalle de confiance assez petit) la timeseries originale et arrive à capter les effets de la saisonalité.
+Dans le modèle proposé ht_cnt on voit que beta=0 est le meilleur paramètre ce qui signifie qu'on ne réagit pas vite au changement. Car HoltWinter ignore complètement la tendance haussière générale sur deux ans.
 Car il calcule les valeurs prédites sur une seule période (2012-2013) et la tendance haussière est présente sur les deux périodes (2011-2012 et 2012-2013 ) c'est à dire qu'en se restreignant à une seule période,
 on obtient une série (la série originale) sans tendance.
 Pour la valeur de alpha, on choisit une valeur de alpha petite (alpha ~0.18) ce qui signifie que les anciennes observations sont plus pris en compte que les récentes.
 En effet la série originale a beaucoup de fluctuations ce qui engendre du bruit important, si on met une valeur de alpha trop grande, on réagit vite aux changements
-et donc fluctuations ce qui occasionne un résultat moins fiable et plus de fluctuations q'une valeur de alpha petite.
+et donc les fluctuations occasionnent un résultat moins fiable que pour une valeur de alpha petite.
 Pour gamma (gamma ~0.5599661), il prend bien en compte la période précédente (2011-2012).
 
 Pour la time series du modèle, Il n'y a pas de saisonalité car par assez de période (time series originale sur 2 période 2011-2012 et 2012-2013).
-La time series du modèle représente les valeurs une seule période (2012-2013).
+La time series du modèle représente les valeurs sur une seule période (2012-2013).
 En ce qui concerne la stationarité, on obtient une série pas trop stationnaire (pas une variance constante).
 
 3.
 La série du modèle n'étant pas stationnaire, on la différencie pour obtenir une série temporelle stationnaire pour pouvoir
 appliquer le modèle ARIMA.
+
 ```{r}
 ht_cnt_fit <-ht_cnt$fitted[,'xhat']
 diff_ht_cnt_fit<-diff(ht_cnt_fit,differences = 1)
 plot(diff_ht_cnt_fit)
 ```
+
 On peut voir qu'à l'ordre 1 (d=1), on obtient une série temporelle stationnaire.
+
 
 ```{r}
 acf(diff_ht_cnt_fit)
 pacf(diff_ht_cnt_fit)
 ```
+
 3.
 Modèles possibles:
 ACF tend vers 0 et PACF tend vers 0 donc 3 modèles possibles:
+
 -MA(1) d'après l'ACF (après une différenciation de la série originale). (a)
+
 -AR(5) d'après le PACF (après une différenciation de la série originale). (b)
+
 -ARIMA(p=5,d=1,q=1).
+
 On considère ARIMA(5,1,1) car (a) puis (b).
+
 ```{r}
 arima_511<-arima(ht_cnt$fitted[,'xhat'],order = c(5, 1, 1))
 fitted_arima_511 <-ht_cnt$fitted[,'xhat']-arima_511$residuals
@@ -271,7 +291,9 @@ acf(arima_511$residuals,lag.max=20)
 pacf(arima_511$residuals,lag.max=20)
 
 ```
+
 Pas d'auto-corrélation ni d'auto corrélation partielle pour les résidus (20 premiers) --> résidu est bien un bruit blanc.
+
 
 ```{r}
 plot(arima_511$residuals)
@@ -298,7 +320,9 @@ On voit que la p-value ~0.7196 pour Box-Ljung test est  proche de 1 (>0.05) donc
 acf(arima_510$residuals,lag.max=20)
 pacf(arima_510$residuals,lag.max=20)
 ```
+
 Pas d'auto-corrélation ni d'auto corrélation partielle pour les résidus (20 premiers) --> résidu est bien un bruit blanc.
+
 
 ```{r}
 plot(arima_510$residuals)
@@ -306,7 +330,7 @@ sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_
 ```
 résidus un peu près centrés + variance un peu près constante (d'après le graphique) --> résidus bruits blancs.
 
-A la place du ARIMA(0,1,1), nous choisissons de prendre ARIMA(0,1,2) car les résultats sont bien meilleure pour ce modèle ci-dessous.
+À la place du ARIMA(0,1,1), nous choisissons de prendre ARIMA(0,1,2) car les résultats sont bien meilleurs pour ce modèle ci-dessous.
 ```{r}
 arima_012<-arima(ht_cnt$fitted[,'xhat'],order = c(0, 1,2))
 fitted_arima_012<-ht_cnt$fitted[,'xhat']-arima_012$residuals
@@ -332,10 +356,11 @@ plot(arima_012$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_012$residuals),digits=2),round(var(arima_012$residuals),digits=2))
 ```
 résidus un peu près centrés + variance un peu près constante (d'après le graphique) --> résidus bruits blancs.
+
 Conclusion:
-Les trois modèles sont validents (résidus bruit blanc entre autres), nous prenons le modèle avec le plus petit AIC:
+Les trois modèles sont validents (résidus bruits blancs entre autres), nous prenons le modèle avec le plus petit AIC:
 AIC=6087.39 pour ARIMA(0,1,2) / AIC=6090.34 pour ARIMA(5,1,1) / AIC=6097.87 pour ARIMA(5,1,0).
-ARIMA(0,1,2) est le meilleure modèle car c'est le plus simple (moins de paramètres -->prévenir l'overfitting) et le plus petit AIC.
+ARIMA(0,1,2) est le meilleur modèle car c'est le plus simple (moins de paramètres -->prévenir l'overfitting) et le plus petit AIC.
 
 4.I
 
@@ -351,11 +376,17 @@ Avec d=1 --> série temporelle stationnaire (moyenne autour de 0).
 acf(diff_deseason_cnt)
 pacf(diff_deseason_cnt)
 ```
+
 ACF et PACF tend vers 0 de manière exponentielle:
+
 -MA(1) d'après l'ACF (après une différenciation de la série originale). (a)
+
 -AR(5) d'après le PACF (après une différenciation de la série originale). (b)
+
 -ARIMA(p=5,d=1,q=1).
+
 On considère dans un premiers temps ARIMA(5,1,1) car (a) puis (b).
+
 
 ```{r}
 arima_cnt_511<-arima(deseason_cnt,order = c(5, 1,1))
@@ -376,7 +407,9 @@ Box.test(arima_cnt_511$residuals,lag=20,type="Ljung")
 acf(arima_cnt_511$residuals)
 pacf(arima_cnt_511$residuals)
 ```
-On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box).
+
+On voit que certains lags dépassent (ACF) l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box).
+
 
 ```{r}
 plot(arima_cnt_511$residuals)
@@ -399,12 +432,15 @@ arima_cnt_012
 Box.test(arima_cnt_012$residuals,lag=20,type="Ljung")
 ```
 
-Les 20 premiers résidus ne sont pas indépendant que pour ARIMA(512): p-value~1.568e-08 très petite p-value!!!
+Les 20 premiers résidus ne sont pas indépendants: p-value~1.568e-08 très petite p-value!!!
+
 ```{r}
 acf(arima_cnt_012$residuals)
 pacf(arima_cnt_012$residuals)
 ```
-On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour
+
+
+On voit que certains lags (ACF) dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour
 certains résidus (ça se confirme avec le Test Q de Ljung-Box).
 
 
@@ -412,7 +448,7 @@ certains résidus (ça se confirme avec le Test Q de Ljung-Box).
 plot(arima_cnt_012$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_012$residuals),digits=2),round(var(arima_cnt_012$residuals),digits=2))
 ```
-Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
+Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variations (pics hauts) à certaines périodes).
 
 ```{r}
 arima_cnt_510<-arima(deseason_cnt,order = c(5, 1,0))
@@ -431,25 +467,28 @@ Box.test(arima_cnt_510$residuals,lag=20,type="Ljung")
 acf(arima_cnt_510$residuals)
 pacf(arima_cnt_510$residuals)
 ```
-On voit que certains lags dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box) mais comme p-value plus grande que les deux autres modèles, c'est moins
+
+On voit que certains lags (ACF) dépassent l'intervalle de confiance de 95% --> possiblement auto corrélation différente de 0 pour certains résidus (ça se confirme avec le Test Q de Ljung-Box) mais comme la p-value plus grande que les deux autres modèles, c'est moins
 flagrant en regardant juste l'ACF.
+
 
 ```{r}
 plot(arima_cnt_510$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_cnt_510$residuals),digits=2),round(var(arima_cnt_510$residuals),digits=2))
 ```
-Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variation (pics hauts) à certaines périodes).
+Résidus nulles pour la période mi 2011-mi 2012 --> logique car la série temporelle deseason_cnt ressemble à une droite linéaire sans bruit ni aléas (facile à prédire). C'est la tendance. Moyenne centrée en 0 et variance constante (avec quelques variations (pics hauts) à certaines périodes).
 
 Conclusion:
 On remarque tout d'abord que dans les 3 modèles, les résidus ne sont pas indépendants, ce qui s'explique:
 La time series se sépare entre trois parties:
 avant milieu 2011 et après milieu 2012 --> time series stationnaire sans tendance.
 Entre les deux période: une tendance linéaire (droite) sans bruit (sans phénomènes aléatoires).
-Les modèle ARIMA prédisent très bien la droite (deterministe) ce qui conduit à des résidus très proche de 0.
-Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
+Les modèles ARIMA prédisent très bien la droite (deterministe) ce qui conduit à des résidus très proche de 0.
+Cependant avant milieu 2011 et après milieu 2012 les résidus fluctuent beaucoup autour de 0 (bruit aléatoire).
 Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
 Les résidus ne sont donc pas des bruit blancs car pas indépendants dans les 3 modèles.
 Donc ces modèles ARIMA ne sont pas bons pour cette série mais si on devrait en choisir un on choisit ARIMA(0,1,2):
+
 ARIMA 511:
 Log(vraisemblance)=-5989.55
 AIC= 11993.1 
@@ -463,8 +502,10 @@ Log(vraisemblance)=-5999.03
 AIC=12004.06
 
 En effet la différence maximale d'AIC entre ARIMA(0,1,2) et les deux autres modèles est de l'ordre de 0.091%:
+
 (12004.06-11993.1)/11993.1 ~ 0.00091.
-Nous choisissons donc le modèle le moins complexe pour prévenir le risque l'overfitting ARIMA(0,1,2) car la différence d'AIC est vraiment minime entre les modèles.
+
+Nous choisissons donc le modèle le moins complexe pour prévenir le risque d'overfitting ARIMA(0,1,2) car la différence d'AIC est vraiment minime entre les modèles.
 
 4.II
 
@@ -488,25 +529,23 @@ La time series se sépare entre trois parties:
 avant milieu 2011 et après milieu 2012 --> time series stationnaire sans tendance.
 Entre les deux période: une tendance linéaire (droite).
 Le modèle auto.ARIMA prédit très bien la droite (deterministe) ce qui conduit à des résidus très proche de 0.
-Cependant avant milieu 2011 et après milieu 2012 les résidus flucutent beaucoup autour de 0 (bruit aléatoire).
+Cependant avant milieu 2011 et après milieu 2012 les résidus fluctuent beaucoup autour de 0 (bruit aléatoire).
 Ce qui rend les probabilités des valeurs des résidus dépendant du temps et donc ils ne sont pas indépendants.
 
 
 4.III
-La démarche d'évaluation et d'itération a été faite précédemment.
+La démarche d'évaluations et d'itérations a été faite précédemment.
 ```{r}
 forecast_cnt_best_model <-forecast(auto_arima_cnt,h=25)
 plot(forecast_cnt_best_model)
 ```
+
 4.IV
+
 ```{r}
 deseason_cnt
 ```
 
-```{r}
-tmp <- ts(deseason_cnt,frequency=1,start=c(1,1))
-tmp
-```
 ```{r}
 training_set <- window(deseason_cnt,2011,end=2012.915)
 test_set <-window(deseason_cnt,start=2012.915)
@@ -527,10 +566,15 @@ plot(diff_training_set)
 acf(diff_training_set)
 pacf(diff_training_set)
 ```
+
 ACF et PACF tend vers 0 de manière exponentielle:
+
 ARIMA(5,1,0) d'après le PACF
+
 ARIMA(0,1,1) d'après l'ACF
+
 ARIMA(5,1,1)
+
 
 ```{r}
 arima_training_set_510 <- arima(diff_training_set,order=c(5,1,0))
@@ -540,12 +584,13 @@ arima_training_set_510
 ```{r}
 Box.test(arima_training_set_510$residuals,lag=20,type="Ljung")
 ```
-Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (2.2e-16<0.05)
+Rejet de l'hypothèse:  Résidus (les 20 premiers) autocorrélés (2.2e-16<0.05)
 ```{r}
 acf(arima_training_set_510$residuals)
 pacf(arima_training_set_510$residuals)
 ```
-Logique
+
+Logique d'après le test précédent.
 
 ```{r}
 plot(arima_training_set_510$residuals)
@@ -562,12 +607,13 @@ arima_training_set_012
 ```{r}
 Box.test(arima_training_set_012$residuals,lag=20,type="Ljung")
 ```
-Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (2.2e-16<0.05).
+Rejet de l'hypothèse  Résidus: (les 20 premiers) autocorrélés (2.2e-16<0.05).
 ```{r}
 acf(arima_training_set_012$residuals)
 pacf(arima_training_set_012$residuals)
 ```
-Logique
+
+Logique d'après le test précédent.
 
 ```{r}
 plot(arima_training_set_012$residuals)
@@ -583,23 +629,31 @@ arima_training_set_511
 ```{r}
 Box.test(arima_training_set_511$residuals,lag=20,type="Ljung")
 ```
-Rejet de l'hypothèse  Résidus (les 20 premiers) autocorrélés (0.000597<0.05)
+Rejet de l'hypothèse:  Résidus (les 20 premiers) autocorrélés (0.000597<0.05).
 ```{r}
 acf(arima_training_set_511$residuals)
 pacf(arima_training_set_511$residuals)
 ```
-On observe qu'il y a moins d'auto corrélations ou d'auto corrélation partielle que les deux autres modèles
+
+On observe qu'il y a moins d'auto corrélations ou d'auto corrélations partielles que les deux autres modèles
 --> logique car la p-value du test ci-dessus est plus grande que pour les deux autres modèles précédents.
+
 
 ```{r}
 plot(arima_training_set_511$residuals)
 sprintf("Moyenne des résidus:%f et Variance des résidus: %f",round(mean(arima_training_set_511$residuals),digits=2),round(var(arima_training_set_511$residuals),digits=2))
 ```
+
 résidus un peu près centrés + variance un peu près constante (d'après le graphique).
+
 AIC=11469.69 -->ARIMA(5,1,1) 
+
 AIC=11493.01 -->ARIMA(0,1,2) 
+
 AIC=11724.96 -->ARIMA(5,1,0)
-(*) Modèle le plus petit AIC mais 6 paramètre on chosit ARIMA(0,1,2)-->modèle moins complexe avec une différence d'AIC négligeable
+
+(*) Modèle le plus petit AIC mais 6 paramètre on chosit ARIMA(0,1,2)-->modèle moins complexe avec une différence d'AIC négligeable.
+
 
 ```{r}
 auto_arima_cnt<-auto.arima(training_set,d=1)
